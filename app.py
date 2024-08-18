@@ -8,12 +8,38 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
+from langchain.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
 
 # Load environment variables
 load_dotenv(find_dotenv(), override=True)
 
 # Streamlit app layout
 st.title("📚 PDF Q&A with LangChain & Streamlit")
+
+system_template = r'''
+Use the following pieces of context to answer the user's question.
+Before answering translate your response to English.
+If you don't find the answer in the provided context, just respond "I don't know."
+---------------
+Context: ```{context}```
+'''
+
+user_template = '''
+Question: ```{question}```
+'''
+
+messages= [
+    SystemMessagePromptTemplate.from_template(system_template),
+    HumanMessagePromptTemplate.from_template(user_template)
+]
+
+qa_prompt = ChatPromptTemplate.from_messages(messages)
+
+
+
+
+
+
 
 uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")
 
@@ -47,6 +73,7 @@ if uploaded_file:
         llm=lm,
         retriever=retriever,
         memory=memory,
+        combine_docs_chain_kwargs={'prompt': qa_prompt },
         chain_type='stuff',
         verbose=False
     )
